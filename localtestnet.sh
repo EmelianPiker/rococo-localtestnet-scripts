@@ -2,8 +2,10 @@
 test_names="alice bob"
 
 relay_nodes_count=2
+
+parachains="200"
 parachain_nodes_count=1
-parachain_collators_count=1
+parachain_collators_count=4
 
 dir=`dirname $PWD`
 iroha="$dir/iroha"
@@ -13,6 +15,7 @@ logdir_pattern="/tmp/iroha-rococo-localtestnet-logs-XXXXXXXX"
 
 # Empty values
 relay_nodes=""
+parachain_collators=""
 
 function get_test_name() {
 	echo $test_names | fmt -w 1 | awk "NR == `expr $1 + 1` { print \$0 }"
@@ -63,6 +66,43 @@ function start_relay_node() {
 	relay_nodes="$relay_nodes /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
+function start_parachain_collator() {
+	wsport=`expr $1 + 19944`
+	port=`expr $1 + 31333`
+	test_name=`get_test_name $1`
+	prefix=$log/parachain_collator
+	localid=${prefix}_$1.localid
+	logfile=${prefix}_$1.log
+	relaychain_bootnodes=""
+	if [ "$relaychain_bootnodes" != "" ]
+	then
+		relaychain_bootnodes="--bootnodes $relay_nodes"
+	fi
+	parachain_bootnodes=""
+	if [ "$parachain_bootnodes" != "" ]
+	then
+		parachain_bootnodes="--bootnodes $parachain_collators"
+	fi
+	sh -c "parachain-collator \
+		  --tmp \
+		  --validator \
+		  --ws-port $wsport \
+		  --port $port \
+		  --parachain-id $2 \
+		  $parachain_bootnodes \
+		  -- --chain $chain_json \
+	          $relaychain_bootnodes 2>&1" | \
+	    awk "/Local node identity is: / { print \$8 > \"$localid\"; fflush() }
+		                            { print \$0; fflush() }" > $logfile &
+	while [ ! -f $localid ]
+	do
+		sleep 0.1
+	done
+	echo "Parachain collator $1 with is running with localid `cat $localid`"
+	parachain_collators="$parachain_collators /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
+}
+
+
 check_dirs_and_files
 create_log_dir
 
@@ -72,6 +112,14 @@ add_path $polkadot
 for relay_node_number in `seq 1 $relay_nodes_count`
 do
 	start_relay_node `expr $relay_node_number - 1`
+done
+
+for parachain_id in $parachains
+do
+	for parachain_collator_number in `seq 1 $parachain_collators_count`
+	do
+		start_parachain_collator `expr $parachain_collator_number - 1` $parachain_id
+	done
 done
 
 wait
