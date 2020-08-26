@@ -57,9 +57,10 @@ function start_relay_node() {
 	          --port $port \
 	          --$test_name \
 	          $bootnodes 2>&1" | \
-		  awk "/Local node identity is: /
-		       { if (!a) { print \$8 > \"$localid\"; fflush() }; a=1 }
-		       { print \$0; fflush() }" > $logfile &
+	    awk "BEGIN { a=1 }
+		 /Local node identity is: /
+		 { if (a==1) { print \$8 > \"$localid\"; fflush() }; a=0 }
+		 { print \$0; fflush() }" > $logfile &
 	while [ ! -f $localid ]
 	do
 		sleep 0.1
@@ -94,9 +95,10 @@ function start_parachain_collator() {
 		  $parachain_bootnodes \
 		  -- --chain $chain_json \
 	          $relaychain_bootnodes 2>&1" | \
-	    awk "/Local node identity is: /
-		  { if (!a) { print \$8 > \"$localid\"; fflush() }; a=1 }
-		  { print \$0; fflush() }" > $logfile &
+	    awk "BEGIN { a=1 }
+		 /Local node identity is: /
+		 { if (a==1) { print \$8 > \"$localid\"; fflush() }; a=0 }
+		 { print \$0; fflush() }" > $logfile &
 	while [ ! -f $localid ]
 	do
 		sleep 0.1
