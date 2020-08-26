@@ -63,7 +63,7 @@ function start_relay_node() {
 	do
 		sleep 0.1
 	done
-	echo "Relay node $1 with is running with localid `cat $localid`"
+	echo "Relay node $1 with is running"
 	relay_nodes="$relay_nodes /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
@@ -71,7 +71,7 @@ function start_parachain_collator() {
 	wsport=`expr $1 + 19944`
 	port=`expr $1 + 31333`
 	test_name=`get_test_name $1`
-	prefix=$log/parachain_collator
+	prefix=$log/parachain_$2_collator
 	localid=${prefix}_$1.localid
 	logfile=${prefix}_$1.log
 	relaychain_bootnodes=""
@@ -99,7 +99,7 @@ function start_parachain_collator() {
 	do
 		sleep 0.1
 	done
-	echo "Parachain collator $1 with is running with localid `cat $localid`"
+	echo "Parachain $2 collator $1 with is running"
 	parachain_collators="$parachain_collators /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
