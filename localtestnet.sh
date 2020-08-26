@@ -1,6 +1,8 @@
 #!/bin/sh
 test_names="alice bob"
 
+iroha_nodes_count=1
+
 relaychain_nodes_count=2
 
 parachains="200"
@@ -38,13 +40,21 @@ function add_path() {
 	PATH="$1/target/release:$PATH"
 }
 
+function start_iroha_node() {
+	prefix=$log/iroha_node_$1
+	logfile=$prefix.log
+	sh -c "exec iroha 2>&1" | \
+	    awk "{ print \$0; fflush() }" > $logfile &
+	echo "Iroha node $1 is running"
+}
+
 function start_relaychain_node() {
 	wsport=`expr $1 + 9944`
 	port=`expr $1 + 30333`
 	test_name=`get_test_name $1`
-	prefix=$log/relaychain_node
-	localid=${prefix}_$1.localid
-	logfile=${prefix}_$1.log
+	prefix=$log/relaychain_node_$1
+	localid=$prefix.localid
+	logfile=$prefix.log
 	bootnodes=""
 	if [ "$relay_nodes" != "" ]
 	then
@@ -151,6 +161,11 @@ create_log_dir
 add_path $iroha
 add_path $polkadot
 add_path $parachain
+
+for iroha_node_number in `seq 1 $iroha_nodes_count`
+do
+	start_iroha_node `expr $iroha_node_number - 1`
+done
 
 for relaychain_node_number in `seq 1 $relaychain_nodes_count`
 do
