@@ -50,7 +50,7 @@ function start_relay_node() {
 	then
 		bootnodes="--bootnodes $relay_nodes"
 	fi
-	sh -c "polkadot \
+	sh -c "exec polkadot \
 		  --chain $chain_json \
 	          --tmp \
 	          --ws-port $wsport \
@@ -58,8 +58,8 @@ function start_relay_node() {
 	          --$test_name \
 	          $bootnodes 2>&1" | \
 	    awk "BEGIN { a=1 }
-		 /Local node identity is: /
-		 { if (a==1) { print \$8 > \"$localid\"; fflush() }; a=0 }
+		 /Local node identity is: /{ if (a) {
+		   print \$8 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
 	while [ ! -f $localid ]
 	do
@@ -96,8 +96,8 @@ function start_parachain_collator() {
 		  -- --chain $chain_json \
 	          $relaychain_bootnodes 2>&1" | \
 	    awk "BEGIN { a=1 }
-		 /Local node identity is: /
-		 { if (a==1) { print \$8 > \"$localid\"; fflush() }; a=0 }
+		 /Local node identity is: /{ if (a) {
+		   print \$8 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
 	while [ ! -f $localid ]
 	do
