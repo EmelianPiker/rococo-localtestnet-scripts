@@ -65,7 +65,7 @@ function start_relay_node() {
 	do
 		sleep 0.1
 	done
-	echo "Relay node $1 with is running"
+	echo "Relay node $1 is running"
 	relay_nodes="$relay_nodes /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
@@ -103,7 +103,7 @@ function start_parachain_collator() {
 	do
 		sleep 0.1
 	done
-	echo "Parachain $2 collator $1 with is running"
+	echo "Parachain $2 collator $1 is running"
 	parachain_collators="$parachain_collators /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
