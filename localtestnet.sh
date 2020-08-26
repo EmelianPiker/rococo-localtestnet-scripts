@@ -46,14 +46,13 @@ function start_relay_node() {
 	then
 		bootnodes="--bootnodes $relay_nodes"
 	fi
-	polkadot \
-	    --chain $chain_json \
-	    --tmp \
-	    --ws-port $wsport \
-	    --port $port \
-	    --$test_name \
-	    "$bootnodes"
-	    2>&1 | \
+	sh -c "polkadot \
+		  --chain $chain_json \
+	          --tmp \
+	          --ws-port $wsport \
+	          --port $port \
+	          --$test_name \
+	          $bootnodes 2>&1" | \
 	    awk "/Local node identity is: / { print \$8 > \"$localid\"; fflush() }
 		                            { print \$0; fflush() }" > $logfile &
 	while [ ! -f $localid ]
