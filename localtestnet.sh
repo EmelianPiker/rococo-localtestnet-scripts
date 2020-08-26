@@ -1,13 +1,22 @@
 #!/bin/sh
+test_names="alice bob"
 
-relay_nodes=2
-parachain_nodes=1
-parachain_collators=1
+relay_nodes_count=2
+parachain_nodes_count=1
+parachain_collators_count=1
 
 dir=`dirname $PWD`
 iroha="$dir/iroha"
 polkadot="$dir/polkadot"
 chain_json="$polkadot/rococo-custom.json"
+logdir_pattern="/tmp/iroha-rococo-localtestnet-logs-XXXXXXXX"
+
+# Empty values
+relay_nodes=""
+
+function get_test_name() {
+	echo $test_names | fmt -w 1 | awk "NR == `expr $1 + 1` { print \$0 }"
+}
 
 function check_dirs_and_files() {
 	test -d $iroha      || exit 1
@@ -15,12 +24,57 @@ function check_dirs_and_files() {
 	test -f $chain_json || exit 1
 }
 
+function create_log_dir() {
+	log=`mktemp -u $logdir_pattern`
+	mkdir -p $log
+	echo "Rococo localtestnet logdir is: $log"
+}
+
 function add_path() {
-	PATH="$PATH:$1/target/release"
+	PATH="$1/target/release:$PATH"
+}
+
+function start_relay_node() {
+	wsport=`expr $1 + 9944`
+	port=`expr $1 + 30333`
+	test_name=`get_test_name $1`
+	prefix=$log/relay_node
+	localid=${prefix}_$1.localid
+	logfile=${prefix}_$1.log
+	bootnodes=""
+	if [ "$relay_nodes" != "" ]
+	then
+		bootnodes="--bootnodes $relay_nodes"
+	fi
+	polkadot \
+	    --chain $chain_json \
+	    --tmp \
+	    --ws-port $wsport \
+	    --port $port \
+	    --$test_name \
+	    "$bootnodes"
+	    2>&1 | \
+	    awk "/Local node identity is: / { print \$8 > \"$localid\"; fflush() }
+		                            { print \$0; fflush() }" > $logfile &
+	while [ ! -f $localid ]
+	do
+		sleep 0.1
+	done
+	echo "Relay node $1 with is running with localid `cat $localid`"
+	relay_nodes="$relay_nodes /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
 check_dirs_and_files
+create_log_dir
 
 add_path $iroha
 add_path $polkadot
+
+for relay_node_number in `seq 1 $relay_nodes_count`
+do
+	start_relay_node `expr $relay_node_number - 1`
+done
+
+wait
+
 
