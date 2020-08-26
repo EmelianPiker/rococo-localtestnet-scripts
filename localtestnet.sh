@@ -43,7 +43,7 @@ function add_path() {
 function start_iroha_node() {
 	prefix=$log/iroha_node_$1
 	logfile=$prefix.log
-	sh -c "exec iroha 2>&1" | \
+	sh -c "cd $iroha; exec iroha 2>&1" | \
 	    awk "{ print \$0; fflush() }" > $logfile &
 	echo "Iroha node $1 is running"
 }
