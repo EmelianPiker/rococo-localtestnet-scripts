@@ -11,6 +11,7 @@ dir=`dirname $PWD`
 iroha="$dir/iroha"
 polkadot="$dir/polkadot"
 chain_json="$polkadot/rococo-custom.json"
+parachain="$dir/substrate-parachain-template"
 logdir_pattern="/tmp/iroha-rococo-localtestnet-logs-XXXXXXXX"
 
 # Empty values
@@ -108,6 +109,7 @@ create_log_dir
 
 add_path $iroha
 add_path $polkadot
+add_path $parachain
 
 for relay_node_number in `seq 1 $relay_nodes_count`
 do
