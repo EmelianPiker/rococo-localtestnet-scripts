@@ -14,7 +14,7 @@ iroha="$dir/iroha"
 polkadot="$dir/polkadot"
 chain_json="$polkadot/rococo-custom.json"
 parachain="$dir/substrate-parachain-template"
-logdir_pattern="/tmp/iroha-rococo-localtestnet-logs-XXXXXXXX"
+logdir_pattern="/tmp/rococo-localtestnet-logs-XXXXXXXX"
 
 # Empty values
 relaychain_nodes=""
