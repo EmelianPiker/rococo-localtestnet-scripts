@@ -12,7 +12,7 @@ parachain_collators_count=4
 dir=`dirname $PWD`
 iroha="$dir/iroha"
 polkadot="$dir/polkadot"
-chain_json="$polkadot/rococo-custom.json"
+chain_json="$PWD/rococo-custom.json"
 parachain="$dir/parachain"
 logdir_pattern="/tmp/rococo-localtestnet-logs-XXXXXXXX"
 

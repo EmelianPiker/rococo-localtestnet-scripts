@@ -18,5 +18,5 @@ function clone_and_build() {
 
 clone_and_build iroha     https://github.com/EmelianPiker/iroha ae9f93f0
 clone_and_build polkadot  https://github.com/paritytech/polkadot fd4b176f
-clone_and_build parachain https://github.com/EmelianPiker/substrate-iroha-bridge-node b6dd4de1
+clone_and_build parachain https://github.com/EmelianPiker/substrate-iroha-bridge-node 5eb92b17
 
