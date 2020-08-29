@@ -8,9 +8,9 @@ function clone_and_build() {
 		git clone $2
 		pushd $1
 			git checkout $3
-			ln -s $top/Makefile .
-			ln -s $top/shell.nix .
-			ln -s $top/nix-env.sh .
+			ln -s $top/misc/Makefile .
+			ln -s $top/misc/shell.nix .
+			ln -s $top/misc/nix-env.sh .
 			make || exit
 		popd
 	fi
