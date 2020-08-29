@@ -19,6 +19,7 @@ logdir_pattern="/tmp/rococo-localtestnet-logs-XXXXXXXX"
 # Empty values
 relaychain_nodes=""
 parachain_nodes=""
+pids=""
 
 function get_test_name() {
 	echo $test_names | fmt -w 1 | awk "NR == `expr $1 + 1` { print \$0 }"
@@ -43,8 +44,9 @@ function add_path() {
 function start_iroha_node() {
 	prefix=$log/iroha_node_$1
 	logfile=$prefix.log
-	sh -c "cd $iroha; exec iroha 2>&1" | \
-	    awk "{ print \$0; fflush() }" > $logfile &
+	(sh -c "cd $iroha; exec iroha 2>&1" & echo $! >&3) 3>$prefix.pid | \
+		awk "{ print \$0; fflush() }" > $logfile &
+	pids="$pids `cat $prefix.pid`"
 	echo "Iroha node $1 is running"
 }
 
@@ -60,17 +62,18 @@ function start_relaychain_node() {
 	then
 		bootnodes="--bootnodes $relaychain_nodes"
 	fi
-	sh -c "exec polkadot \
+	(sh -c "exec polkadot \
 		  --chain $chain_json \
 	          --tmp \
 	          --ws-port $wsport \
 	          --port $port \
 	          --$test_name \
-	          $bootnodes 2>&1" | \
+		  $bootnodes 2>&1" & echo $! >&3) 3>$prefix.pid | \
 	    awk "BEGIN { a=1 }
 		 /Local node identity is: /{ if (a) {
 		   print \$8 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
+	pids="$pids `cat $prefix.pid`"
 	while [ ! -f $localid ]
 	do
 		sleep 0.1
@@ -96,18 +99,20 @@ function start_parachain_fullnode() {
 	then
 		parachain_bootnodes="--bootnodes $parachain_nodes"
 	fi
-	sh -c "parachain-collator \
+	(sh -c "parachain-collator \
 		  --tmp \
+		  --offchain-worker Always \
 		  --ws-port $wsport \
 		  --port $port \
 		  --parachain-id $2 \
 		  $parachain_bootnodes \
 		  -- --chain $chain_json \
-	          $relaychain_bootnodes 2>&1" | \
+	          $relaychain_bootnodes 2>&1" & echo $! >&3) 3>$prefix.pid | \
 	    awk "BEGIN { a=1 }
 		 /Local node identity is: /{ if (a) {
 		   print \$8 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
+	pids="$pids `cat $prefix.pid`"
 	while [ ! -f $localid ]
 	do
 		sleep 0.1
@@ -133,7 +138,7 @@ function start_parachain_collator() {
 	then
 		parachain_bootnodes="--bootnodes $parachain_nodes"
 	fi
-	sh -c "parachain-collator \
+	(sh -c "parachain-collator \
 		  --tmp \
 		  --validator \
 		  --ws-port $wsport \
@@ -141,11 +146,12 @@ function start_parachain_collator() {
 		  --parachain-id $2 \
 		  $parachain_bootnodes \
 		  -- --chain $chain_json \
-	          $relaychain_bootnodes 2>&1" | \
+	          $relaychain_bootnodes 2>&1" & echo $! >&3) 3>$prefix.pid | \
 	    awk "BEGIN { a=1 }
 		 /Local node identity is: /{ if (a) {
 		   print \$8 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
+	pids="$pids `cat $prefix.pid 2> /dev/null`"
 	while [ ! -f $localid ]
 	do
 		sleep 0.1
@@ -154,6 +160,15 @@ function start_parachain_collator() {
 	parachain_nodes="$parachain_nodes /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
+function finalize() {
+	for pid in $pids
+	do
+		kill -KILL $pid > /dev/null 2>&1
+	done
+	exit
+}
+
+trap finalize 0 1 2 3 6 15
 
 check_dirs_and_files
 create_log_dir
