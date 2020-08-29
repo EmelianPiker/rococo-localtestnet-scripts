@@ -13,7 +13,7 @@ dir=`dirname $PWD`
 iroha="$dir/iroha"
 polkadot="$dir/polkadot"
 chain_json="$polkadot/rococo-custom.json"
-parachain="$dir/substrate-parachain-template"
+parachain="$dir/parachain"
 logdir_pattern="/tmp/rococo-localtestnet-logs-XXXXXXXX"
 
 # Empty values
@@ -160,7 +160,7 @@ create_log_dir
 
 add_path $iroha
 add_path $polkadot
-add_path $parachain
+add_path /tmp/merge/substrate-parachain-template
 
 for iroha_node_number in `seq 1 $iroha_nodes_count`
 do
@@ -186,6 +186,10 @@ do
 	done
 
 done
+
+parachain-collator export-genesis-wasm > /tmp/parachain.wasm
+cat $log/parachain_200_collator_0.log | \
+  awk "/Parachain genesis state: /{ print \$6; exit }" > /tmp/genesis
 
 wait
 
