@@ -114,7 +114,7 @@ function start_parachain_fullnode() {
 	fi
 	(sh -c "parachain-collator \
 		  --tmp \
-		  `if [ $1 == 0 ]; then echo --offchain-worker Always; fi` \
+		  `if [ $1 == 0 ]; then echo --offchain-worker Always; else echo --offchain-worker Never; fi` \
 		  --alice \
 		  --ws-port $wsport \
 		  --port $port \
