@@ -110,8 +110,8 @@ function start_parachain_fullnode() {
 	fi
 	(sh -c "parachain-collator \
 		  --tmp \
-		  --alice \
 		  --offchain-worker Always \
+		  --alice \
 		  --ws-port $wsport \
 		  --port $port \
 		  --parachain-id $2 \
@@ -151,6 +151,8 @@ function start_parachain_collator() {
 	(sh -c "parachain-collator \
 		  --tmp \
 		  --validator \
+		  --alice \
+		  --offchain-worker Always \
 		  --ws-port $wsport \
 		  --port $port \
 		  --parachain-id $2 \
@@ -177,7 +179,7 @@ function waiting_for_ready_state() {
 		cat $log/parachain_$1_fullnode_0.log | \
 	    	 	awk -F "[#( ]" "
 		 		/Parachain.*Idle.*peers.*best: / {
-		 			if ((\$11 == $peers) && (\$15 == 2)) {
+		 			if ((\$11 == $peers) && (\$15 == 4)) {
 						print \$0 > \"$log/ready.txt\"
 						exit
 		 			}
