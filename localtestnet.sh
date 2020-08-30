@@ -1,4 +1,5 @@
 #!/bin/sh
+test -f localtestnet.sh || exit
 test_names="alice bob"
 
 iroha_nodes_count=1
@@ -10,6 +11,7 @@ parachain_fullnodes_count=2
 parachain_collators_count=4
 
 dir=`dirname $PWD`
+bin="$PWD/local/bin"
 iroha="$dir/iroha"
 polkadot="$dir/polkadot"
 chain_json="$PWD/rococo-custom.json"
@@ -26,6 +28,7 @@ function get_test_name() {
 }
 
 function check_dirs_and_files() {
+	test -f $bin/polkadot-js-api || exit 1
 	test -d $iroha      || exit 1
 	test -d $polkadot   || exit 1
 	test -f $chain_json || exit 1
@@ -37,8 +40,14 @@ function create_log_dir() {
 	echo "Rococo localtestnet logdir is: $log"
 }
 
-function add_path() {
+function add_cargo_path() {
 	PATH="$1/target/release:$PATH"
+	export PATH
+}
+
+function add_path() {
+	PATH="$1:$PATH"
+	export PATH
 }
 
 function start_iroha_node() {
@@ -83,8 +92,8 @@ function start_relaychain_node() {
 }
 
 function start_parachain_fullnode() {
-	wsport=`expr $1 + 19944`
-	port=`expr $1 + 31333`
+	wsport=`expr $1 + 19944 + $2`
+	port=`expr $1 + 31333 + $2`
 	test_name=`get_test_name $1`
 	prefix=$log/parachain_$2_fullnode_$1
 	localid=$prefix.localid
@@ -122,8 +131,8 @@ function start_parachain_fullnode() {
 }
 
 function start_parachain_collator() {
-	wsport=`expr $1 + 29944`
-	port=`expr $1 + 32333`
+	wsport=`expr $1 + 29944 + $2`
+	port=`expr $1 + 32333 + $2`
 	test_name=`get_test_name $1`
 	prefix=$log/parachain_$2_collator_$1
 	localid=$prefix.localid
@@ -173,9 +182,10 @@ trap finalize 0 1 2 3 6 15
 check_dirs_and_files
 create_log_dir
 
-add_path $iroha
-add_path $polkadot
-add_path /tmp/merge/substrate-parachain-template
+add_path $bin
+add_cargo_path $iroha
+add_cargo_path $polkadot
+add_cargo_path /tmp/merge/substrate-parachain-template
 
 for iroha_node_number in `seq 1 $iroha_nodes_count`
 do
@@ -200,11 +210,24 @@ do
 		start_parachain_collator `expr $parachain_collator_number - 1` $parachain_id
 	done
 
-done
+	parachain-collator export-genesis-wasm > $log/parachain_${parachain_id}.wasm
+	cat $log/parachain_${parachain_id}_collator_0.log | \
+		awk "/Parachain genesis state: /{ print \$6; exit }" > $log/genesis_${parachain_id}.txt
 
-parachain-collator export-genesis-wasm > /tmp/parachain.wasm
-cat $log/parachain_200_collator_0.log | \
-  awk "/Parachain genesis state: /{ print \$6; exit }" > /tmp/genesis
+	while true; do
+		polkadot-js-api \
+			--ws "ws://127.0.0.1:9944" \
+			--sudo \
+			--seed "//Alice" \
+			tx.registrar.registerPara \
+			$parachain_id \
+			'{"scheduling":"Always"}' \
+			@"$log/parachain_${parachain_id}.wasm" \
+			"`cat $log/genesis_${parachain_id}.txt`" | \
+	    	    grep '"InBlock": "0x' && break
+    	done
+
+done
 
 wait
 

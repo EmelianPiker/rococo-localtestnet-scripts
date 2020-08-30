@@ -7,4 +7,5 @@ cargo:
 
 yarn:
 	${RUN} "yarn"
+	${RUN} "yarn build"
 
