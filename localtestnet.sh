@@ -110,6 +110,7 @@ function start_parachain_fullnode() {
 	fi
 	(sh -c "parachain-collator \
 		  --tmp \
+		  --alice \
 		  --offchain-worker Always \
 		  --ws-port $wsport \
 		  --port $port \
@@ -169,11 +170,35 @@ function start_parachain_collator() {
 	parachain_nodes="$parachain_nodes /ip4/127.0.0.1/tcp/$port/p2p/`cat $localid`"
 }
 
+function waiting_for_ready_state() {
+	peers=`expr $parachain_fullnodes_count + $parachain_collators_count - 1`
+	while [ ! -f $log/ready.txt ]
+	do
+		cat $log/parachain_$1_fullnode_0.log | \
+	    	 	awk -F "[#( ]" "
+		 		/Parachain.*Idle.*peers.*best: / {
+		 			if ((\$11 == $peers) && (\$15 == 2)) {
+						print \$0 > \"$log/ready.txt\"
+						exit
+		 			}
+		 		}"
+		sleep 0.1
+	done
+	echo "Ready for testing, parachain $1 blocks is produced"
+}
+
+function run_tests() {
+	sh -c "cd $iroha; bridge-tester"
+	#polkadot-js-api --seed "//Alice" tx.balances.transfer 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty 999
+}
+
 function finalize() {
 	for pid in $pids
 	do
 		kill -KILL $pid > /dev/null 2>&1
 	done
+	# Remove log dir, comment or uncomment if needed
+	#rm -Rf $log
 	exit
 }
 
@@ -226,10 +251,17 @@ do
 			'{"scheduling":"Always"}' \
 			@"$log/parachain_${parachain_id}.wasm" \
 			"`cat $log/genesis_${parachain_id}.txt`" | \
-	    	    grep '"InBlock": "0x' && break
+	    	    grep -q '"InBlock": "0x' && break
     	done
+	echo "Parachain $parachain_id is registred"
 
 done
+
+for parachain_id in $parachains
+do
+	waiting_for_ready_state $parachain_id
+done
+run_tests
 
 wait
 
