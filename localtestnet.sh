@@ -217,7 +217,7 @@ add_cargo_path $iroha
 add_cargo_path $polkadot
 add_cargo_path /tmp/merge/substrate-parachain-template
 
-export RUST_LOG=iroha_bridge=trace
+export RUST_LOG="iroha_bridge=trace,sc_rpc=trace"
 
 for iroha_node_number in `seq 1 $iroha_nodes_count`
 do
