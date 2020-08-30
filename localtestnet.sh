@@ -29,8 +29,9 @@ function get_test_name() {
 
 function check_dirs_and_files() {
 	test -f $bin/polkadot-js-api || exit 1
-	test -d $iroha      || exit 1
-	test -d $polkadot   || exit 1
+	test -d $iroha || exit 1
+	test -f $iroha/config.json || exit 1
+	test -d $polkadot || exit 1
 	test -f $chain_json || exit 1
 }
 
@@ -54,7 +55,9 @@ function start_iroha_node() {
 	prefix=$log/iroha_node_$1
 	logfile=$prefix.log
 	rm -Rf $iroha/blocks > /dev/null 2>&1
-	(sh -c "cd $iroha; exec iroha 2>&1" & echo $! >&3) 3>$prefix.pid | \
+	mkdir -p $log/iroha
+	cp $iroha/config.json $log/iroha/
+	(sh -c "cd $log/iroha; exec iroha 2>&1" & echo $! >&3) 3>$prefix.pid | \
 		awk "{ print \$0; fflush() }" > $logfile &
 	pids="$pids `cat $prefix.pid`"
 	echo "Iroha node $1 is running"
@@ -111,7 +114,7 @@ function start_parachain_fullnode() {
 	fi
 	(sh -c "parachain-collator \
 		  --tmp \
-		  --offchain-worker Always \
+		  `if [ $1 == 0 ]; then echo --offchain-worker Always; fi` \
 		  --alice \
 		  --ws-port $wsport \
 		  --port $port \
@@ -153,7 +156,6 @@ function start_parachain_collator() {
 		  --tmp \
 		  --validator \
 		  --alice \
-		  --offchain-worker Always \
 		  --ws-port $wsport \
 		  --port $port \
 		  --parachain-id $2 \
@@ -180,7 +182,7 @@ function waiting_for_ready_state() {
 		cat $log/parachain_$1_fullnode_0.log | \
 	    	 	awk -F "[#( ]" "
 		 		/Parachain.*Idle.*peers.*best: / {
-		 			if ((\$11 == $peers) && (\$15 == 10)) {
+		 			if ((\$11 == $peers) && (\$15 >= 1)) {
 						print \$0 > \"$log/ready.txt\"
 						exit
 		 			}
