@@ -6,6 +6,7 @@ cd ..
 function clone_and_build() {
 	if [ ! -d $1 ]; then
 		git clone $2
+		mv `basename $2` $1
 		pushd $1
 			git checkout $3
 			ln -s $top/misc/Makefile .
@@ -16,6 +17,7 @@ function clone_and_build() {
 	fi
 }
 
+clone_and_build api       https://github.com/polkadot-js/api 7ecd00a4
 clone_and_build iroha     https://github.com/EmelianPiker/iroha ae9f93f0
 clone_and_build polkadot  https://github.com/paritytech/polkadot fd4b176f
 clone_and_build parachain https://github.com/EmelianPiker/substrate-iroha-bridge-node 5eb92b17
