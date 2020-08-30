@@ -80,7 +80,7 @@ function start_relaychain_node() {
 		  $bootnodes 2>&1" & echo $! >&3) 3>$prefix.pid | \
 	    awk "BEGIN { a=1 }
 		 /Local node identity is: /{ if (a) {
-		   print \$8 > \"$localid\"; fflush(); a=0 } }
+		   print \$11 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
 	pids="$pids `cat $prefix.pid`"
 	while [ ! -f $localid ]
@@ -119,7 +119,7 @@ function start_parachain_fullnode() {
 	          $relaychain_bootnodes 2>&1" & echo $! >&3) 3>$prefix.pid | \
 	    awk "BEGIN { a=1 }
 		 /Local node identity is: /{ if (a) {
-		   print \$8 > \"$localid\"; fflush(); a=0 } }
+		   print \$11 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
 	pids="$pids `cat $prefix.pid`"
 	while [ ! -f $localid ]
@@ -158,7 +158,7 @@ function start_parachain_collator() {
 	          $relaychain_bootnodes 2>&1" & echo $! >&3) 3>$prefix.pid | \
 	    awk "BEGIN { a=1 }
 		 /Local node identity is: /{ if (a) {
-		   print \$8 > \"$localid\"; fflush(); a=0 } }
+		   print \$11 > \"$localid\"; fflush(); a=0 } }
 		 { print \$0; fflush() }" > $logfile &
 	pids="$pids `cat $prefix.pid 2> /dev/null`"
 	while [ ! -f $localid ]
@@ -187,6 +187,8 @@ add_cargo_path $iroha
 add_cargo_path $polkadot
 add_cargo_path /tmp/merge/substrate-parachain-template
 
+export RUST_LOG=iroha_bridge=trace
+
 for iroha_node_number in `seq 1 $iroha_nodes_count`
 do
 	start_iroha_node `expr $iroha_node_number - 1`
@@ -212,7 +214,7 @@ do
 
 	parachain-collator export-genesis-wasm > $log/parachain_${parachain_id}.wasm
 	cat $log/parachain_${parachain_id}_collator_0.log | \
-		awk "/Parachain genesis state: /{ print \$6; exit }" > $log/genesis_${parachain_id}.txt
+		awk "/Parachain genesis state: /{ print \$9; exit }" > $log/genesis_${parachain_id}.txt
 
 	while true; do
 		polkadot-js-api \
