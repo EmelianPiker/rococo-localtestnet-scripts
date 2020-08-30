@@ -53,6 +53,7 @@ function add_path() {
 function start_iroha_node() {
 	prefix=$log/iroha_node_$1
 	logfile=$prefix.log
+	rm -Rf $iroha/blocks > /dev/null 2>&1
 	(sh -c "cd $iroha; exec iroha 2>&1" & echo $! >&3) 3>$prefix.pid | \
 		awk "{ print \$0; fflush() }" > $logfile &
 	pids="$pids `cat $prefix.pid`"
@@ -179,7 +180,7 @@ function waiting_for_ready_state() {
 		cat $log/parachain_$1_fullnode_0.log | \
 	    	 	awk -F "[#( ]" "
 		 		/Parachain.*Idle.*peers.*best: / {
-		 			if ((\$11 == $peers) && (\$15 == 4)) {
+		 			if ((\$11 == $peers) && (\$15 == 10)) {
 						print \$0 > \"$log/ready.txt\"
 						exit
 		 			}

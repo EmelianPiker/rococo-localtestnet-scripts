@@ -20,7 +20,7 @@ function clone_and_build() {
 #clone_and_build yarn  api       https://github.com/polkadot-js/api 7ecd00a4
 npm install -g @polkadot/api-cli --prefix $top/local
 
-clone_and_build cargo iroha     https://github.com/EmelianPiker/iroha 5cad811b
+clone_and_build cargo iroha     https://github.com/EmelianPiker/iroha 31aa2819
 clone_and_build cargo polkadot  https://github.com/paritytech/polkadot fd4b176f
 clone_and_build cargo parachain https://github.com/EmelianPiker/substrate-iroha-bridge-node 634eb907
 
