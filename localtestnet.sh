@@ -92,8 +92,8 @@ function start_relaychain_node() {
 }
 
 function start_parachain_fullnode() {
-	wsport=`expr $1 + 19944 + $2`
-	port=`expr $1 + 31333 + $2`
+	wsport=`expr $1 + 19944 - $2`
+	port=`expr $1 + 31333 - $2`
 	test_name=`get_test_name $1`
 	prefix=$log/parachain_$2_fullnode_$1
 	localid=$prefix.localid
@@ -131,8 +131,8 @@ function start_parachain_fullnode() {
 }
 
 function start_parachain_collator() {
-	wsport=`expr $1 + 29944 + $2`
-	port=`expr $1 + 32333 + $2`
+	wsport=`expr $1 + 29944 - $2`
+	port=`expr $1 + 32333 - $2`
 	test_name=`get_test_name $1`
 	prefix=$log/parachain_$2_collator_$1
 	localid=$prefix.localid
