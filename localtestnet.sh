@@ -215,7 +215,7 @@ create_log_dir
 add_path $bin
 add_cargo_path $iroha
 add_cargo_path $polkadot
-add_cargo_path /tmp/merge/substrate-parachain-template
+add_cargo_path $parachain
 
 export RUST_LOG="iroha_bridge=trace,sc_rpc=trace"
 
